@@ -1,0 +1,239 @@
+using ClinicFlow.Common;
+using ClinicFlow.Data;
+using ClinicFlow.DTOs.Appointment;
+using ClinicFlow.Entities;
+using ClinicFlow.Enums;
+using ClinicFlow.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace ClinicFlow.Services;
+
+public class AppointmentService : IAppointmentService
+{
+    private readonly AppDbContext _context;
+
+    public AppointmentService(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<PagedResponse<AppointmentDto>> GetAllAsync(AppointmentQueryParams queryParams)
+    {
+        var query = _context.Appointments.AsNoTracking().AsQueryable();
+
+        if (queryParams.DoctorId.HasValue)
+            query = query.Where(a => a.DoctorId == queryParams.DoctorId.Value);
+
+        if (queryParams.PatientId.HasValue)
+            query = query.Where(a => a.PatientId == queryParams.PatientId.Value);
+
+        if (!string.IsNullOrWhiteSpace(queryParams.Status) &&
+            Enum.TryParse<AppointmentStatus>(queryParams.Status, true, out var parsedStatus))
+            query = query.Where(a => a.Status == parsedStatus);
+
+        if (queryParams.Date.HasValue)
+        {
+            var date = queryParams.Date.Value.Date;
+            query = query.Where(a => a.AppointmentDate.Date == date);
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var items = await ProjectAppointmentQuery(query)
+            .OrderByDescending(a => a.AppointmentDate)
+            .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
+            .Take(queryParams.PageSize)
+            .ToListAsync();
+
+        return new PagedResponse<AppointmentDto>
+        {
+            Items = items,
+            PageNumber = queryParams.PageNumber,
+            PageSize = queryParams.PageSize,
+            TotalCount = totalCount
+        };
+    }
+
+    public async Task<AppointmentDto?> GetByIdAsync(int id)
+    {
+        var query = _context.Appointments
+            .AsNoTracking()
+            .Where(a => a.Id == id);
+
+        return await ProjectAppointmentQuery(query).FirstOrDefaultAsync();
+    }
+
+    public async Task<(bool Success, string Message, AppointmentDto? Appointment)> CreateAsync(CreateAppointmentDto dto)
+    {
+        if (dto.AppointmentDate <= DateTime.Now)
+            return (false, "Appointment date must be in the future.", null);
+
+        if (dto.AppointmentDate.Second != 0 || dto.AppointmentDate.Millisecond != 0)
+            return (false, "Appointment time must not include seconds or milliseconds.", null);
+
+        if (dto.AppointmentDate.Minute % 15 != 0)
+            return (false, "Appointment time must be on a 15-minute interval. Example: 09:00, 09:15, 09:30, 09:45.", null);
+
+        var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == dto.DoctorId);
+        if (!doctorExists)
+            return (false, "Invalid doctor id.", null);
+
+        var patientExists = await _context.Patients.AnyAsync(p => p.Id == dto.PatientId);
+        if (!patientExists)
+            return (false, "Invalid patient id.", null);
+
+        var appointmentDay = dto.AppointmentDate.DayOfWeek;
+        var appointmentTime = dto.AppointmentDate.TimeOfDay;
+
+        var isWithinDoctorSchedule = await _context.DoctorSchedules.AnyAsync(s =>
+            s.DoctorId == dto.DoctorId &&
+            s.DayOfWeek == appointmentDay &&
+            appointmentTime >= s.StartTime &&
+            appointmentTime < s.EndTime);
+
+        if (!isWithinDoctorSchedule)
+            return (false, "Appointment time is outside the doctor's working schedule.", null);
+
+        var hasDoctorConflict = await _context.Appointments.AnyAsync(a =>
+            a.DoctorId == dto.DoctorId &&
+            a.AppointmentDate == dto.AppointmentDate &&
+            a.Status != AppointmentStatus.Cancelled);
+
+        if (hasDoctorConflict)
+            return (false, "This doctor already has an appointment at this time.", null);
+
+        var hasPatientConflict = await _context.Appointments.AnyAsync(a =>
+            a.PatientId == dto.PatientId &&
+            a.AppointmentDate == dto.AppointmentDate &&
+            a.Status != AppointmentStatus.Cancelled);
+
+        if (hasPatientConflict)
+            return (false, "This patient already has an appointment at this time.", null);
+
+        var appointment = new Appointment
+        {
+            DoctorId = dto.DoctorId,
+            PatientId = dto.PatientId,
+            AppointmentDate = dto.AppointmentDate,
+            Status = AppointmentStatus.Pending
+        };
+
+        _context.Appointments.Add(appointment);
+        await _context.SaveChangesAsync();
+
+        var created = await GetByIdAsync(appointment.Id);
+        return (true, "Appointment created successfully.", created);
+    }
+
+    public async Task<(bool Success, string Message)> ConfirmAsync(int id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment is null) return (false, "Appointment not found.");
+        if (appointment.Status == AppointmentStatus.Cancelled) return (false, "Cancelled appointment cannot be confirmed.");
+        if (appointment.Status == AppointmentStatus.Completed) return (false, "Completed appointment cannot be confirmed.");
+        if (appointment.Status == AppointmentStatus.Confirmed) return (false, "Appointment is already confirmed.");
+
+        appointment.Status = AppointmentStatus.Confirmed;
+        await _context.SaveChangesAsync();
+        return (true, "Appointment confirmed.");
+    }
+
+    public async Task<(bool Success, string Message)> CancelAsync(int id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment is null) return (false, "Appointment not found.");
+        if (appointment.Status == AppointmentStatus.Completed) return (false, "Completed appointment cannot be cancelled.");
+        if (appointment.Status == AppointmentStatus.Cancelled) return (false, "Appointment is already cancelled.");
+
+        appointment.Status = AppointmentStatus.Cancelled;
+        await _context.SaveChangesAsync();
+        return (true, "Appointment cancelled.");
+    }
+
+    public async Task<(bool Success, string Message)> CompleteAsync(int id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment is null) return (false, "Appointment not found.");
+        if (appointment.Status == AppointmentStatus.Cancelled) return (false, "Cancelled appointment cannot be completed.");
+        if (appointment.Status == AppointmentStatus.Pending) return (false, "Pending appointment must be confirmed before completion.");
+        if (appointment.Status == AppointmentStatus.Completed) return (false, "Appointment is already completed.");
+
+        appointment.Status = AppointmentStatus.Completed;
+        await _context.SaveChangesAsync();
+        return (true, "Appointment completed.");
+    }
+
+    public async Task<List<UpcomingAppointmentDto>> GetUpcomingAsync(int days = 7)
+    {
+        if (days <= 0)
+            days = 7;
+
+        var now = DateTime.Now;
+        var endDate = now.AddDays(days);
+
+        var doctorsQuery = _context.Doctors.IgnoreQueryFilters();
+        var patientsQuery = _context.Patients.IgnoreQueryFilters();
+        var specializationsQuery = _context.Specializations.IgnoreQueryFilters();
+
+        return await _context.Appointments
+            .AsNoTracking()
+            .Where(a =>
+                a.AppointmentDate >= now &&
+                a.AppointmentDate <= endDate &&
+                a.Status != AppointmentStatus.Cancelled)
+            .OrderBy(a => a.AppointmentDate)
+            .Select(a => new UpcomingAppointmentDto
+            {
+                Id = a.Id,
+                AppointmentDate = a.AppointmentDate,
+                Status = a.Status.ToString(),
+                DoctorId = a.DoctorId,
+                DoctorName = doctorsQuery
+                    .Where(d => d.Id == a.DoctorId)
+                    .Select(d => d.FullName)
+                    .FirstOrDefault() ?? string.Empty,
+                SpecializationName = (
+                    from d in doctorsQuery
+                    join s in specializationsQuery on d.SpecializationId equals s.Id
+                    where d.Id == a.DoctorId
+                    select s.Name
+                ).FirstOrDefault() ?? string.Empty,
+                PatientId = a.PatientId,
+                PatientName = patientsQuery
+                    .Where(p => p.Id == a.PatientId)
+                    .Select(p => p.FullName)
+                    .FirstOrDefault() ?? string.Empty
+            })
+            .ToListAsync();
+    }
+
+    private IQueryable<AppointmentDto> ProjectAppointmentQuery(IQueryable<Appointment> query)
+    {
+        var doctorsQuery = _context.Doctors.IgnoreQueryFilters();
+        var patientsQuery = _context.Patients.IgnoreQueryFilters();
+        var specializationsQuery = _context.Specializations.IgnoreQueryFilters();
+
+        return query.Select(a => new AppointmentDto
+        {
+            Id = a.Id,
+            AppointmentDate = a.AppointmentDate,
+            Status = a.Status.ToString(),
+            DoctorId = a.DoctorId,
+            DoctorName = doctorsQuery
+                .Where(d => d.Id == a.DoctorId)
+                .Select(d => d.FullName)
+                .FirstOrDefault() ?? string.Empty,
+            PatientId = a.PatientId,
+            PatientName = patientsQuery
+                .Where(p => p.Id == a.PatientId)
+                .Select(p => p.FullName)
+                .FirstOrDefault() ?? string.Empty,
+            SpecializationName = (
+                from d in doctorsQuery
+                join s in specializationsQuery on d.SpecializationId equals s.Id
+                where d.Id == a.DoctorId
+                select s.Name
+            ).FirstOrDefault() ?? string.Empty
+        });
+    }
+}

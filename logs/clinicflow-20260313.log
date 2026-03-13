@@ -1,0 +1,154 @@
+2026-03-13 03:37:38.070 +03:00 [WRN] Entity 'Doctor' has a global query filter defined and is the required end of a relationship with the entity 'Appointment'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-03-13 03:37:38.098 +03:00 [WRN] Entity 'Doctor' has a global query filter defined and is the required end of a relationship with the entity 'DoctorSchedule'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-03-13 03:39:33.660 +03:00 [WRN] Entity 'Appointment' has a global query filter defined and is the required end of a relationship with the entity 'Visit'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-03-13 03:41:17.095 +03:00 [WRN] Entity 'Visit' has a global query filter defined and is the required end of a relationship with the entity 'Prescription'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-03-13 03:43:33.705 +03:00 [ERR] Hosting failed to start
+System.IO.IOException: Failed to bind to address http://127.0.0.1:5173: address already in use.
+ ---> Microsoft.AspNetCore.Connections.AddressInUseException: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+ ---> System.Net.Sockets.SocketException (10048): Only one usage of each socket address (protocol/network address/port) is normally permitted.
+   at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.AddressesStrategy.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.BindAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.StartAsync[TContext](IHttpApplication`1 application, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+2026-03-13 03:45:04.996 +03:00 [ERR] Hosting failed to start
+System.IO.IOException: Failed to bind to address http://127.0.0.1:5173: address already in use.
+ ---> Microsoft.AspNetCore.Connections.AddressInUseException: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+ ---> System.Net.Sockets.SocketException (10048): Only one usage of each socket address (protocol/network address/port) is normally permitted.
+   at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions.CreateDefaultBoundListenSocket(EndPoint endpoint)
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketConnectionListener.Bind()
+   at Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportFactory.BindAsync(EndPoint endpoint, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Infrastructure.TransportManager.BindAsync(EndPoint endPoint, ConnectionDelegate connectionDelegate, EndpointConfig endpointConfig, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.<>c__DisplayClass28_0`1.<<StartAsync>g__OnBind|0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.BindEndpointAsync(ListenOptions endpoint, AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.LocalhostListenOptions.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.Internal.AddressBinder.AddressesStrategy.BindAsync(AddressBindContext context, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.BindAsync(CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerImpl.StartAsync[TContext](IHttpApplication`1 application, CancellationToken cancellationToken)
+   at Microsoft.AspNetCore.Hosting.GenericWebHostService.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+2026-03-13 03:49:47.863 +03:00 [INF] HTTP GET /health responded 200 in 107.2252 ms
+2026-03-13 03:49:47.969 +03:00 [INF] HTTP GET /favicon.ico responded 404 in 3.2668 ms
+2026-03-13 03:50:00.681 +03:00 [INF] HTTP GET / responded 200 in 36.2762 ms
+2026-03-13 04:45:08.473 +03:00 [INF] HTTP GET /swagger responded 301 in 16.1348 ms
+2026-03-13 04:45:08.560 +03:00 [INF] HTTP GET /swagger/index.html responded 200 in 40.0771 ms
+2026-03-13 04:45:08.592 +03:00 [INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 200 in 13.0693 ms
+2026-03-13 04:45:08.592 +03:00 [INF] HTTP GET /swagger/swagger-ui.css responded 200 in 15.5083 ms
+2026-03-13 04:45:08.623 +03:00 [INF] HTTP GET /swagger/swagger-ui-bundle.js responded 200 in 46.4336 ms
+2026-03-13 04:45:08.725 +03:00 [INF] HTTP GET /swagger/favicon-32x32.png responded 200 in 0.4324 ms
+2026-03-13 04:45:08.829 +03:00 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 119.6813 ms
+2026-03-13 04:47:38.345 +03:00 [INF] HTTP GET /health responded 200 in 64.5846 ms
+2026-03-13 04:47:38.423 +03:00 [INF] HTTP GET /favicon.ico responded 404 in 1.8761 ms
+2026-03-13 04:47:47.750 +03:00 [INF] HTTP GET / responded 200 in 28.3102 ms
+2026-03-13 04:49:05.089 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 172.5557 ms
+2026-03-13 04:49:34.131 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 401 in 7.0143 ms
+2026-03-13 04:49:35.767 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 401 in 2.6753 ms
+2026-03-13 04:49:38.727 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 401 in 25.1590 ms
+2026-03-13 04:50:37.883 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 200 in 224.9638 ms
+2026-03-13 04:51:16.033 +03:00 [INF] HTTP GET /api/Specializations responded 200 in 19.7049 ms
+2026-03-13 04:51:17.694 +03:00 [INF] HTTP GET /api/Specializations responded 200 in 4.0008 ms
+2026-03-13 04:51:38.623 +03:00 [INF] HTTP GET /api/Doctors responded 200 in 83.2655 ms
+2026-03-13 04:51:57.257 +03:00 [INF] HTTP GET /api/Patients responded 200 in 27.1970 ms
+2026-03-13 04:51:58.356 +03:00 [INF] HTTP GET /api/Patients responded 200 in 5.4282 ms
+2026-03-13 04:52:22.342 +03:00 [INF] HTTP GET /api/Appointments/upcoming responded 200 in 81.2944 ms
+2026-03-13 04:52:49.600 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 200 in 65.7613 ms
+2026-03-13 04:53:32.492 +03:00 [INF] HTTP POST /api/Prescriptions responded 400 in 49.1831 ms
+2026-03-13 04:53:36.619 +03:00 [INF] HTTP POST /api/Prescriptions responded 400 in 58.2264 ms
+2026-03-13 04:54:12.755 +03:00 [INF] HTTP POST /api/Specializations responded 201 in 102.9355 ms
+2026-03-13 04:54:21.473 +03:00 [INF] HTTP POST /api/Specializations responded 400 in 1.9193 ms
+2026-03-13 04:54:30.019 +03:00 [INF] HTTP POST /api/Specializations responded 400 in 3.3939 ms
+2026-03-13 06:51:30.993 +03:00 [INF] HTTP GET /health responded 200 in 80.8413 ms
+2026-03-13 06:51:31.124 +03:00 [INF] HTTP GET /favicon.ico responded 404 in 3.8594 ms
+2026-03-13 06:53:34.957 +03:00 [INF] HTTP GET /swagger/index.html responded 200 in 96.4702 ms
+2026-03-13 06:53:35.146 +03:00 [INF] HTTP GET /swagger/v1/swagger.json responded 200 in 112.8355 ms
+2026-03-13 06:54:05.881 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 184.8920 ms
+2026-03-13 06:54:59.166 +03:00 [INF] HTTP POST /api/Auth/register responded 401 in 52.3432 ms
+2026-03-13 06:56:39.832 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 171.0420 ms
+2026-03-13 06:56:48.564 +03:00 [INF] HTTP POST /api/Auth/register responded 200 in 248.0718 ms
+2026-03-13 06:57:39.957 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 82.4012 ms
+2026-03-13 06:59:27.203 +03:00 [INF] HTTP GET /api/Patients responded 200 in 100.0516 ms
+2026-03-13 06:59:49.086 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 403 in 10.8512 ms
+2026-03-13 07:01:04.128 +03:00 [INF] HTTP POST /api/Patients responded 201 in 176.5131 ms
+2026-03-13 07:01:34.090 +03:00 [INF] HTTP GET /api/Patients/1002 responded 200 in 11.4282 ms
+2026-03-13 07:03:38.380 +03:00 [INF] HTTP POST /api/Patients responded 400 in 5.7977 ms
+2026-03-13 07:03:57.322 +03:00 [INF] HTTP POST /api/Patients responded 400 in 2.5606 ms
+2026-03-13 07:04:13.257 +03:00 [INF] HTTP POST /api/Patients responded 201 in 8.0901 ms
+2026-03-13 07:05:18.118 +03:00 [INF] HTTP PUT /api/Patients/1003 responded 200 in 39.1988 ms
+2026-03-13 07:06:40.460 +03:00 [INF] HTTP GET /api/Patients responded 200 in 8.0123 ms
+2026-03-13 07:06:53.609 +03:00 [INF] HTTP GET /api/Patients/1003 responded 200 in 4.0357 ms
+2026-03-13 07:07:50.470 +03:00 [INF] HTTP GET /api/Patients/1003/summary responded 200 in 123.5598 ms
+2026-03-13 07:08:14.560 +03:00 [INF] HTTP GET /api/Patients/search responded 200 in 16.4346 ms
+2026-03-13 07:08:35.027 +03:00 [INF] HTTP GET /api/Patients/3/history responded 200 in 76.2473 ms
+2026-03-13 07:09:08.056 +03:00 [INF] HTTP POST /api/Patients responded 400 in 44.6779 ms
+2026-03-13 07:10:35.947 +03:00 [INF] HTTP GET /api/Doctors responded 200 in 35.1549 ms
+2026-03-13 07:11:21.093 +03:00 [INF] HTTP PUT /api/Doctors/1 responded 403 in 0.5463 ms
+2026-03-13 07:11:31.661 +03:00 [INF] HTTP PUT /api/Doctors/3 responded 403 in 0.7590 ms
+2026-03-13 07:11:44.897 +03:00 [INF] HTTP GET /api/Doctors/3 responded 200 in 13.3749 ms
+2026-03-13 07:11:57.552 +03:00 [INF] HTTP POST /api/Doctors responded 403 in 0.6001 ms
+2026-03-13 07:12:56.127 +03:00 [INF] HTTP POST /api/Doctors responded 403 in 0.3770 ms
+2026-03-13 07:12:57.126 +03:00 [INF] HTTP POST /api/Doctors responded 403 in 0.5946 ms
+2026-03-13 07:15:04.505 +03:00 [INF] HTTP GET /api/Appointments responded 200 in 60.2661 ms
+2026-03-13 07:15:28.047 +03:00 [INF] HTTP GET /api/Appointments/upcoming responded 200 in 23.0180 ms
+2026-03-13 07:16:19.060 +03:00 [INF] HTTP POST /api/Appointments responded 400 in 24.3328 ms
+2026-03-13 07:16:46.162 +03:00 [INF] HTTP POST /api/Appointments responded 400 in 19.6408 ms
+2026-03-13 07:17:04.113 +03:00 [INF] HTTP POST /api/Appointments responded 400 in 2.9352 ms
+2026-03-13 07:20:58.036 +03:00 [INF] HTTP POST /api/Appointments responded 201 in 76.2483 ms
+2026-03-13 07:22:05.707 +03:00 [INF] HTTP PATCH /api/Appointments/1002/confirm responded 200 in 29.0238 ms
+2026-03-13 07:22:45.890 +03:00 [INF] HTTP PATCH /api/Appointments/1002/cancel responded 200 in 13.0484 ms
+2026-03-13 07:26:39.199 +03:00 [INF] HTTP GET /api/Specializations responded 200 in 24.6094 ms
+2026-03-13 07:27:06.433 +03:00 [INF] HTTP GET /api/Specializations/1 responded 200 in 10.7098 ms
+2026-03-13 07:27:31.630 +03:00 [INF] HTTP GET /api/DoctorSchedules responded 200 in 19.4442 ms
+2026-03-13 07:27:32.583 +03:00 [INF] HTTP GET /api/DoctorSchedules responded 200 in 3.5859 ms
+2026-03-13 07:28:19.766 +03:00 [INF] HTTP GET /api/DoctorSchedules/1 responded 200 in 15.2902 ms
+2026-03-13 07:29:11.472 +03:00 [INF] HTTP GET /api/DoctorSchedules/doctor/5/daily responded 404 in 17.5230 ms
+2026-03-13 07:29:19.160 +03:00 [INF] HTTP GET /api/DoctorSchedules/doctor/3/daily responded 200 in 26.5055 ms
+2026-03-13 07:30:03.256 +03:00 [INF] HTTP GET /api/Appointments/1002 responded 200 in 5.3413 ms
+2026-03-13 07:30:35.063 +03:00 [INF] HTTP GET /api/Visits responded 200 in 28.1282 ms
+2026-03-13 07:31:03.135 +03:00 [INF] HTTP GET /api/Visits/5 responded 404 in 16.7162 ms
+2026-03-13 07:31:08.141 +03:00 [INF] HTTP GET /api/Visits/5 responded 404 in 3.8692 ms
+2026-03-13 07:31:11.928 +03:00 [INF] HTTP GET /api/Visits/1 responded 200 in 2.2512 ms
+2026-03-13 07:31:36.856 +03:00 [INF] HTTP GET /api/Prescriptions responded 200 in 32.3135 ms
+2026-03-13 07:31:50.386 +03:00 [INF] HTTP GET /api/Prescriptions/1 responded 200 in 17.2381 ms
+2026-03-13 07:34:02.348 +03:00 [INF] HTTP POST /api/Auth/login responded 200 in 83.3555 ms
+2026-03-13 07:34:49.066 +03:00 [INF] HTTP GET /api/Dashboard/overview responded 200 in 126.2300 ms
+2026-03-13 07:35:21.396 +03:00 [INF] HTTP POST /api/Specializations responded 201 in 37.5203 ms
+2026-03-13 07:35:22.868 +03:00 [INF] HTTP POST /api/Specializations responded 400 in 2.0958 ms
+2026-03-13 07:36:14.591 +03:00 [INF] HTTP POST /api/Specializations responded 201 in 6.5795 ms
+2026-03-13 07:37:14.180 +03:00 [INF] HTTP POST /api/Doctors responded 201 in 60.7453 ms
+2026-03-13 07:38:07.475 +03:00 [INF] HTTP POST /api/DoctorSchedules responded 201 in 93.0395 ms
+2026-03-13 07:38:44.976 +03:00 [INF] HTTP POST /api/Patients responded 201 in 8.8296 ms
+2026-03-13 07:39:19.118 +03:00 [INF] HTTP POST /api/Appointments responded 201 in 11.3868 ms
+2026-03-13 07:40:12.408 +03:00 [INF] HTTP PATCH /api/Appointments/1003/complete responded 400 in 6.6837 ms
+2026-03-13 07:40:19.014 +03:00 [INF] HTTP PATCH /api/Appointments/1004/complete responded 404 in 2.1028 ms
+2026-03-13 07:40:37.364 +03:00 [INF] HTTP PATCH /api/Appointments/1003/complete responded 400 in 3.3787 ms
+2026-03-13 07:41:56.148 +03:00 [INF] HTTP PATCH /api/Appointments/1003/confirm responded 200 in 8.5551 ms
+2026-03-13 07:42:03.656 +03:00 [INF] HTTP PATCH /api/Appointments/1003/complete responded 200 in 5.1122 ms
+2026-03-13 07:42:58.842 +03:00 [INF] HTTP POST /api/Visits responded 201 in 63.3670 ms
+2026-03-13 07:43:30.629 +03:00 [INF] HTTP POST /api/Prescriptions responded 201 in 42.9344 ms
+2026-03-13 07:44:40.318 +03:00 [INF] HTTP POST /api/Doctors responded 400 in 3.0697 ms
+2026-03-13 07:45:20.703 +03:00 [INF] HTTP POST /api/Patients responded 400 in 2.4951 ms
