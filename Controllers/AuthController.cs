@@ -31,60 +31,57 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
-    [HttpPost("register")]
-    [Authorize(Policy = AppPolicies.AdminOnly)]
-    public async Task<IActionResult> Register(RegisterDto dto)
+
+[HttpPost("register")]
+[Authorize(Policy = AppPolicies.AdminOnly)]
+public async Task<IActionResult> Register(RegisterDto dto)
+{
+    var normalizedRole = IdentitySeeder.Roles
+        .FirstOrDefault(r => r.Equals(dto.Role, StringComparison.OrdinalIgnoreCase));
+
+    if (normalizedRole is null)
     {
-        var normalizedRole = IdentitySeeder.Roles
-            .FirstOrDefault(r => r.Equals(dto.Role, StringComparison.OrdinalIgnoreCase));
-
-        if (normalizedRole is null)
-        {
-            return BadRequest(ApiResponse<string>.FailResponse("Invalid role."));
-        }
-
-        var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-
-        if (existingUser is not null)
-        {
-            return BadRequest(ApiResponse<string>.FailResponse("Email is already registered."));
-        }
-
-        var user = new ApplicationUser
-        {
-            FullName = dto.FullName,
-            Email = dto.Email,
-            UserName = dto.Email
-        };
-
-        var result = await _userManager.CreateAsync(user, dto.Password);
-
-        if (!result.Succeeded)
-        {
-            var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
-            return BadRequest(ApiResponse<string>.FailResponse(errors));
-        }
-
-        if (!await _roleManager.RoleExistsAsync(normalizedRole))
-        {
-            return BadRequest(ApiResponse<string>.FailResponse("Role does not exist in the system."));
-        }
-
-        var roleResult = await _userManager.AddToRoleAsync(user, normalizedRole);
-
-        if (!roleResult.Succeeded)
-        {
-            var errors = string.Join(" | ", roleResult.Errors.Select(e => e.Description));
-            return BadRequest(ApiResponse<string>.FailResponse(errors));
-        }
-
-        return Ok(ApiResponse<object>.SuccessResponse(new
-        {
-            user.Email,
-            user.FullName,
-            Role = normalizedRole
-        }, "User registered successfully."));
+        return BadRequest(ApiResponse<object>.FailResponse("Invalid role."));
     }
+
+    if (!await _roleManager.RoleExistsAsync(normalizedRole))
+    {
+        return BadRequest(ApiResponse<object>.FailResponse("Role does not exist in the system."));
+    }
+
+    var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+    if (existingUser is not null)
+    {
+        return BadRequest(ApiResponse<object>.FailResponse("Email is already registered."));
+    }
+
+    var user = new ApplicationUser
+    {
+        FullName = dto.FullName,
+        Email = dto.Email,
+        UserName = dto.Email
+    };
+
+    var result = await _userManager.CreateAsync(user, dto.Password);
+    if (!result.Succeeded)
+    {
+        var errors = string.Join(" | ", result.Errors.Select(e => e.Description));
+        return BadRequest(ApiResponse<object>.FailResponse(errors));
+    }
+
+    var roleResult = await _userManager.AddToRoleAsync(user, normalizedRole);
+    if (!roleResult.Succeeded)
+    {
+        await _userManager.DeleteAsync(user);
+
+        var errors = string.Join(" | ", roleResult.Errors.Select(e => e.Description));
+        return BadRequest(ApiResponse<object>.FailResponse(errors));
+    }
+
+    return Ok(ApiResponse<object>.SuccessResponse(
+        new { user.Email, user.FullName, Role = normalizedRole },
+        "User registered successfully."));
+}
 
     [HttpPost("login")]
     [AllowAnonymous]

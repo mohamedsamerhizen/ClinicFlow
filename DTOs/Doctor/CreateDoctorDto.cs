@@ -15,4 +15,6 @@ public class CreateDoctorDto
 
     [Range(1, int.MaxValue)]
     public int SpecializationId { get; set; }
+
+    public string? ApplicationUserId { get; set; }
 }

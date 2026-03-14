@@ -26,14 +26,13 @@ builder.Services.AddApplicationSwagger();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddResponseCaching();
 builder.Services.AddHealthChecks();
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
     options.OnRejected = async (context, cancellationToken) =>
     {
         context.HttpContext.Response.ContentType = "application/json";
-
         var response = ApiResponse<object>.FailResponse("Too many requests. Please try again later.");
         await context.HttpContext.Response.WriteAsJsonAsync(response, cancellationToken);
     };
@@ -76,15 +75,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseResponseCaching();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseRateLimiter();
 
 app.MapControllers().RequireRateLimiting("api");
 app.MapHealthChecks("/health").AllowAnonymous();
 
-app.MapGet("/", () =>
-    Results.Ok(ApiResponse<string>.SuccessResponse("ClinicFlow API is running.")))
+app.MapGet("/", () => Results.Ok(ApiResponse<string>.SuccessResponse("ClinicFlow API is running.")))
     .AllowAnonymous()
     .WithName("Root");
 
@@ -99,8 +99,18 @@ using (var scope = app.Services.CreateScope())
     var demoSeedOptions = services.GetRequiredService<IOptions<DemoSeedOptions>>();
 
     await dbContext.Database.MigrateAsync();
-    await IdentitySeeder.SeedAdminAsync(userManager, roleManager, adminSeedOptions);
-    await DemoDataSeeder.SeedAsync(dbContext, demoSeedOptions);
+
+    await IdentitySeeder.SeedRolesAsync(roleManager);
+
+    if (app.Environment.IsDevelopment() && adminSeedOptions.Value.Enabled)
+    {
+        await IdentitySeeder.SeedAdminAsync(userManager, roleManager, adminSeedOptions);
+    }
+
+    if (app.Environment.IsDevelopment() && demoSeedOptions.Value.Enabled)
+    {
+        await DemoDataSeeder.SeedAsync(dbContext, demoSeedOptions);
+    }
 }
 
 app.Run();

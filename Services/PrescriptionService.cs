@@ -1,4 +1,5 @@
 using ClinicFlow.Common;
+using ClinicFlow.Constants;
 using ClinicFlow.Data;
 using ClinicFlow.DTOs.Prescription;
 using ClinicFlow.Entities;
@@ -10,24 +11,60 @@ namespace ClinicFlow.Services;
 public class PrescriptionService : IPrescriptionService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public PrescriptionService(AppDbContext context)
+    public PrescriptionService(
+        AppDbContext context,
+        ICurrentUserService currentUserService,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
+        _currentUserService = currentUserService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<PagedResponse<PrescriptionDto>> GetAllAsync(PrescriptionQueryParams queryParams)
     {
-        var query = _context.Prescriptions.AsNoTracking().AsQueryable();
+        var query = _context.Prescriptions
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue)
+            {
+                return new PagedResponse<PrescriptionDto>
+                {
+                    Items = new List<PrescriptionDto>(),
+                    PageNumber = queryParams.PageNumber,
+                    PageSize = queryParams.PageSize,
+                    TotalCount = 0
+                };
+            }
+
+            query = query.Where(p =>
+                p.Visit != null &&
+                p.Visit.Appointment != null &&
+                p.Visit.Appointment.DoctorId == currentDoctorId.Value);
+        }
+        else if (queryParams.DoctorId.HasValue)
+        {
+            query = query.Where(p =>
+                p.Visit != null &&
+                p.Visit.Appointment != null &&
+                p.Visit.Appointment.DoctorId == queryParams.DoctorId.Value);
+        }
 
         if (queryParams.VisitId.HasValue)
             query = query.Where(p => p.VisitId == queryParams.VisitId.Value);
 
         if (queryParams.PatientId.HasValue)
-            query = query.Where(p => p.Visit != null && p.Visit.Appointment != null && p.Visit.Appointment.PatientId == queryParams.PatientId.Value);
-
-        if (queryParams.DoctorId.HasValue)
-            query = query.Where(p => p.Visit != null && p.Visit.Appointment != null && p.Visit.Appointment.DoctorId == queryParams.DoctorId.Value);
+            query = query.Where(p =>
+                p.Visit != null &&
+                p.Visit.Appointment != null &&
+                p.Visit.Appointment.PatientId == queryParams.PatientId.Value);
 
         if (!string.IsNullOrWhiteSpace(queryParams.Search))
         {
@@ -54,18 +91,14 @@ public class PrescriptionService : IPrescriptionService
                 Id = p.Id,
                 VisitId = p.VisitId,
                 AppointmentId = p.Visit != null ? p.Visit.AppointmentId : 0,
-                AppointmentDate = p.Visit != null && p.Visit.Appointment != null ? p.Visit.Appointment.AppointmentDate : DateTime.MinValue,
+                AppointmentDate = p.Visit != null && p.Visit.Appointment != null
+                    ? p.Visit.Appointment.AppointmentDate
+                    : DateTime.MinValue,
                 PatientName = p.Visit != null && p.Visit.Appointment != null
-                    ? patientsQuery
-                        .Where(pt => pt.Id == p.Visit.Appointment.PatientId)
-                        .Select(pt => pt.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? patientsQuery.Where(pt => pt.Id == p.Visit.Appointment.PatientId).Select(pt => pt.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 DoctorName = p.Visit != null && p.Visit.Appointment != null
-                    ? doctorsQuery
-                        .Where(d => d.Id == p.Visit.Appointment.DoctorId)
-                        .Select(d => d.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? doctorsQuery.Where(d => d.Id == p.Visit.Appointment.DoctorId).Select(d => d.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 MedicationName = p.MedicationName,
                 Dosage = p.Dosage,
@@ -85,29 +118,39 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<PrescriptionDto?> GetByIdAsync(int id)
     {
+        var query = _context.Prescriptions
+            .AsNoTracking()
+            .Where(p => p.Id == id);
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue)
+                return null;
+
+            query = query.Where(p =>
+                p.Visit != null &&
+                p.Visit.Appointment != null &&
+                p.Visit.Appointment.DoctorId == currentDoctorId.Value);
+        }
+
         var doctorsQuery = _context.Doctors.IgnoreQueryFilters();
         var patientsQuery = _context.Patients.IgnoreQueryFilters();
 
-        return await _context.Prescriptions
-            .AsNoTracking()
-            .Where(p => p.Id == id)
+        return await query
             .Select(p => new PrescriptionDto
             {
                 Id = p.Id,
                 VisitId = p.VisitId,
                 AppointmentId = p.Visit != null ? p.Visit.AppointmentId : 0,
-                AppointmentDate = p.Visit != null && p.Visit.Appointment != null ? p.Visit.Appointment.AppointmentDate : DateTime.MinValue,
+                AppointmentDate = p.Visit != null && p.Visit.Appointment != null
+                    ? p.Visit.Appointment.AppointmentDate
+                    : DateTime.MinValue,
                 PatientName = p.Visit != null && p.Visit.Appointment != null
-                    ? patientsQuery
-                        .Where(pt => pt.Id == p.Visit.Appointment.PatientId)
-                        .Select(pt => pt.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? patientsQuery.Where(pt => pt.Id == p.Visit.Appointment.PatientId).Select(pt => pt.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 DoctorName = p.Visit != null && p.Visit.Appointment != null
-                    ? doctorsQuery
-                        .Where(d => d.Id == p.Visit.Appointment.DoctorId)
-                        .Select(d => d.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? doctorsQuery.Where(d => d.Id == p.Visit.Appointment.DoctorId).Select(d => d.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 MedicationName = p.MedicationName,
                 Dosage = p.Dosage,
@@ -119,25 +162,35 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<(bool Success, string Message, PrescriptionDto? Prescription)> CreateAsync(CreatePrescriptionDto dto)
     {
-        var medicationName = dto.MedicationName.Trim();
-        var dosage = dto.Dosage.Trim();
-        var instructions = dto.Instructions.Trim();
-
-        if (string.IsNullOrWhiteSpace(medicationName))
+        if (string.IsNullOrWhiteSpace(dto.MedicationName))
             return (false, "Medication name is required.", null);
 
-        if (string.IsNullOrWhiteSpace(dosage))
+        if (string.IsNullOrWhiteSpace(dto.Dosage))
             return (false, "Dosage is required.", null);
 
-        var visitExists = await _context.Visits.AnyAsync(v => v.Id == dto.VisitId);
-        if (!visitExists) return (false, "Invalid visit id.", null);
+        if (string.IsNullOrWhiteSpace(dto.Instructions))
+            return (false, "Instructions are required.", null);
+
+        var visit = await _context.Visits
+            .Include(v => v.Appointment)
+            .FirstOrDefaultAsync(v => v.Id == dto.VisitId);
+
+        if (visit is null)
+            return (false, "Invalid visit id.", null);
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue || visit.Appointment?.DoctorId != currentDoctorId.Value)
+                return (false, "You are not allowed to create a prescription for this visit.", null);
+        }
 
         var prescription = new Prescription
         {
             VisitId = dto.VisitId,
-            MedicationName = medicationName,
-            Dosage = dosage,
-            Instructions = instructions,
+            MedicationName = dto.MedicationName.Trim(),
+            Dosage = dto.Dosage.Trim(),
+            Instructions = dto.Instructions.Trim(),
             DurationInDays = dto.DurationInDays
         };
 
@@ -150,22 +203,33 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<(bool Success, string Message, PrescriptionDto? Prescription)> UpdateAsync(int id, UpdatePrescriptionDto dto)
     {
-        var prescription = await _context.Prescriptions.FindAsync(id);
-        if (prescription is null) return (false, "Prescription not found.", null);
+        var prescription = await _context.Prescriptions
+            .Include(p => p.Visit)
+            .ThenInclude(v => v!.Appointment)
+            .FirstOrDefaultAsync(p => p.Id == id);
 
-        var medicationName = dto.MedicationName.Trim();
-        var dosage = dto.Dosage.Trim();
-        var instructions = dto.Instructions.Trim();
+        if (prescription is null)
+            return (false, "Prescription not found.", null);
 
-        if (string.IsNullOrWhiteSpace(medicationName))
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue || prescription.Visit?.Appointment?.DoctorId != currentDoctorId.Value)
+                return (false, "You are not allowed to update this prescription.", null);
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.MedicationName))
             return (false, "Medication name is required.", null);
 
-        if (string.IsNullOrWhiteSpace(dosage))
+        if (string.IsNullOrWhiteSpace(dto.Dosage))
             return (false, "Dosage is required.", null);
 
-        prescription.MedicationName = medicationName;
-        prescription.Dosage = dosage;
-        prescription.Instructions = instructions;
+        if (string.IsNullOrWhiteSpace(dto.Instructions))
+            return (false, "Instructions are required.", null);
+
+        prescription.MedicationName = dto.MedicationName.Trim();
+        prescription.Dosage = dto.Dosage.Trim();
+        prescription.Instructions = dto.Instructions.Trim();
         prescription.DurationInDays = dto.DurationInDays;
 
         await _context.SaveChangesAsync();
@@ -176,11 +240,42 @@ public class PrescriptionService : IPrescriptionService
 
     public async Task<(bool Success, string Message)> DeleteAsync(int id)
     {
-        var prescription = await _context.Prescriptions.FindAsync(id);
-        if (prescription is null) return (false, "Prescription not found.");
+        var prescription = await _context.Prescriptions
+            .Include(p => p.Visit)
+            .ThenInclude(v => v!.Appointment)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (prescription is null)
+            return (false, "Prescription not found.");
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue || prescription.Visit?.Appointment?.DoctorId != currentDoctorId.Value)
+                return (false, "You are not allowed to delete this prescription.");
+        }
 
         _context.Prescriptions.Remove(prescription);
         await _context.SaveChangesAsync();
+
         return (true, "Prescription deleted successfully.");
+    }
+
+    private bool IsDoctor()
+    {
+        return _httpContextAccessor.HttpContext?.User?.IsInRole(AppRoles.Doctor) == true;
+    }
+
+    private async Task<int?> GetCurrentDoctorIdAsync()
+    {
+        var userId = _currentUserService.UserId;
+        if (string.IsNullOrWhiteSpace(userId))
+            return null;
+
+        return await _context.Doctors
+            .AsNoTracking()
+            .Where(d => d.ApplicationUserId == userId)
+            .Select(d => (int?)d.Id)
+            .FirstOrDefaultAsync();
     }
 }

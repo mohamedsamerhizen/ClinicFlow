@@ -16,17 +16,23 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         _currentUserService = currentUserService;
     }
 
-    public DbSet<Doctor> Doctors { get; set; }
-    public DbSet<Patient> Patients { get; set; }
-    public DbSet<Specialization> Specializations { get; set; }
-    public DbSet<DoctorSchedule> DoctorSchedules { get; set; }
-    public DbSet<Appointment> Appointments { get; set; }
-    public DbSet<Visit> Visits { get; set; }
-    public DbSet<Prescription> Prescriptions { get; set; }
+    public DbSet<Doctor> Doctors => Set<Doctor>();
+    public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<Specialization> Specializations => Set<Specialization>();
+    public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<Visit> Visits => Set<Visit>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<Doctor>()
+            .HasOne(d => d.ApplicationUser)
+            .WithOne(u => u.DoctorProfile)
+            .HasForeignKey<Doctor>(d => d.ApplicationUserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<Appointment>()
             .HasOne(a => a.Doctor)
@@ -79,14 +85,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .IsUnique()
             .HasFilter("[IsDeleted] = 0");
 
-        builder.Entity<Appointment>()
-            .HasIndex(a => a.DoctorId);
+        builder.Entity<Doctor>()
+            .HasIndex(d => d.ApplicationUserId)
+            .IsUnique()
+            .HasFilter("[ApplicationUserId] IS NOT NULL AND [IsDeleted] = 0");
 
         builder.Entity<Appointment>()
-            .HasIndex(a => a.PatientId);
+            .HasIndex(a => new { a.DoctorId, a.AppointmentDate, a.Status });
 
         builder.Entity<Appointment>()
-            .HasIndex(a => a.AppointmentDate);
+            .HasIndex(a => new { a.PatientId, a.AppointmentDate, a.Status });
 
         builder.Entity<Visit>()
             .HasIndex(v => v.AppointmentId)
@@ -191,17 +199,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             }
         }
 
-        ApplySoftDelete<Doctor>(utcNow, currentUserId);
-        ApplySoftDelete<Patient>(utcNow, currentUserId);
-        ApplySoftDelete<Specialization>(utcNow, currentUserId);
+        ApplySoftDelete(utcNow, currentUserId);
 
         return await base.SaveChangesAsync(cancellationToken);
     }
 
-    private void ApplySoftDelete<TEntity>(DateTime utcNow, string? currentUserId)
-        where TEntity : BaseEntity
+    private void ApplySoftDelete(DateTime utcNow, string? currentUserId)
     {
-        foreach (var entry in ChangeTracker.Entries<TEntity>().Where(e => e.State == EntityState.Deleted))
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>().Where(e => e.State == EntityState.Deleted))
         {
             entry.State = EntityState.Modified;
             entry.Entity.IsDeleted = true;

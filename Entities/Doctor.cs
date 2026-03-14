@@ -8,4 +8,7 @@ public class Doctor : BaseEntity
 
     public int SpecializationId { get; set; }
     public Specialization? Specialization { get; set; }
+
+    public string? ApplicationUserId { get; set; }
+    public ApplicationUser? ApplicationUser { get; set; }
 }

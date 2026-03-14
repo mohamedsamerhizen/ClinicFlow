@@ -18,7 +18,9 @@ public class DoctorService : IDoctorService
 
     public async Task<PagedResponse<DoctorDto>> GetAllAsync(DoctorQueryParams queryParams)
     {
-        var query = _context.Doctors.Include(d => d.Specialization).AsQueryable();
+        var query = _context.Doctors
+            .Include(d => d.Specialization)
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(queryParams.Search))
         {
@@ -80,6 +82,9 @@ public class DoctorService : IDoctorService
     {
         var fullName = dto.FullName.Trim();
         var phoneNumber = dto.PhoneNumber.Trim();
+        var applicationUserId = string.IsNullOrWhiteSpace(dto.ApplicationUserId)
+            ? null
+            : dto.ApplicationUserId.Trim();
 
         var specializationExists = await _context.Specializations.AnyAsync(s => s.Id == dto.SpecializationId);
         if (!specializationExists)
@@ -87,15 +92,27 @@ public class DoctorService : IDoctorService
 
         var phoneExists = await _context.Doctors
             .AnyAsync(d => d.PhoneNumber.ToLower() == phoneNumber.ToLower());
-
         if (phoneExists)
             return (false, "Doctor phone number already exists.", null);
+
+        if (!string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == applicationUserId);
+            if (!userExists)
+                return (false, "Invalid application user id.", null);
+
+            var userAlreadyLinked = await _context.Doctors
+                .AnyAsync(d => d.ApplicationUserId == applicationUserId);
+            if (userAlreadyLinked)
+                return (false, "This user is already linked to another doctor.", null);
+        }
 
         var doctor = new Doctor
         {
             FullName = fullName,
             PhoneNumber = phoneNumber,
-            SpecializationId = dto.SpecializationId
+            SpecializationId = dto.SpecializationId,
+            ApplicationUserId = applicationUserId
         };
 
         _context.Doctors.Add(doctor);
@@ -113,6 +130,9 @@ public class DoctorService : IDoctorService
 
         var fullName = dto.FullName.Trim();
         var phoneNumber = dto.PhoneNumber.Trim();
+        var applicationUserId = string.IsNullOrWhiteSpace(dto.ApplicationUserId)
+            ? null
+            : dto.ApplicationUserId.Trim();
 
         var specializationExists = await _context.Specializations.AnyAsync(s => s.Id == dto.SpecializationId);
         if (!specializationExists)
@@ -120,13 +140,25 @@ public class DoctorService : IDoctorService
 
         var phoneExists = await _context.Doctors
             .AnyAsync(d => d.Id != id && d.PhoneNumber.ToLower() == phoneNumber.ToLower());
-
         if (phoneExists)
             return (false, "Doctor phone number already exists.", null);
+
+        if (!string.IsNullOrWhiteSpace(applicationUserId))
+        {
+            var userExists = await _context.Users.AnyAsync(u => u.Id == applicationUserId);
+            if (!userExists)
+                return (false, "Invalid application user id.", null);
+
+            var userAlreadyLinked = await _context.Doctors
+                .AnyAsync(d => d.Id != id && d.ApplicationUserId == applicationUserId);
+            if (userAlreadyLinked)
+                return (false, "This user is already linked to another doctor.", null);
+        }
 
         doctor.FullName = fullName;
         doctor.PhoneNumber = phoneNumber;
         doctor.SpecializationId = dto.SpecializationId;
+        doctor.ApplicationUserId = applicationUserId;
 
         await _context.SaveChangesAsync();
 
@@ -137,7 +169,8 @@ public class DoctorService : IDoctorService
     public async Task<(bool Success, string Message)> DeleteAsync(int id)
     {
         var doctor = await _context.Doctors.FindAsync(id);
-        if (doctor is null) return (false, "Doctor not found.");
+        if (doctor is null)
+            return (false, "Doctor not found.");
 
         var hasSchedules = await _context.DoctorSchedules.AnyAsync(s => s.DoctorId == id);
         if (hasSchedules)
@@ -149,6 +182,7 @@ public class DoctorService : IDoctorService
 
         _context.Doctors.Remove(doctor);
         await _context.SaveChangesAsync();
+
         return (true, "Doctor deleted successfully.");
     }
 }

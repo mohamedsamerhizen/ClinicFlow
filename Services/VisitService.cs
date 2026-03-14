@@ -1,4 +1,5 @@
 using ClinicFlow.Common;
+using ClinicFlow.Constants;
 using ClinicFlow.Data;
 using ClinicFlow.DTOs.Visit;
 using ClinicFlow.Entities;
@@ -11,18 +12,45 @@ namespace ClinicFlow.Services;
 public class VisitService : IVisitService
 {
     private readonly AppDbContext _context;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public VisitService(AppDbContext context)
+    public VisitService(
+        AppDbContext context,
+        ICurrentUserService currentUserService,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
+        _currentUserService = currentUserService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<PagedResponse<VisitDto>> GetAllAsync(VisitQueryParams queryParams)
     {
-        var query = _context.Visits.AsNoTracking().AsQueryable();
+        var query = _context.Visits
+            .AsNoTracking()
+            .AsQueryable();
 
-        if (queryParams.DoctorId.HasValue)
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue)
+            {
+                return new PagedResponse<VisitDto>
+                {
+                    Items = new List<VisitDto>(),
+                    PageNumber = queryParams.PageNumber,
+                    PageSize = queryParams.PageSize,
+                    TotalCount = 0
+                };
+            }
+
+            query = query.Where(v => v.Appointment != null && v.Appointment.DoctorId == currentDoctorId.Value);
+        }
+        else if (queryParams.DoctorId.HasValue)
+        {
             query = query.Where(v => v.Appointment != null && v.Appointment.DoctorId == queryParams.DoctorId.Value);
+        }
 
         if (queryParams.PatientId.HasValue)
             query = query.Where(v => v.Appointment != null && v.Appointment.PatientId == queryParams.PatientId.Value);
@@ -59,16 +87,10 @@ public class VisitService : IVisitService
                 AppointmentId = v.AppointmentId,
                 AppointmentDate = v.Appointment != null ? v.Appointment.AppointmentDate : DateTime.MinValue,
                 PatientName = v.Appointment != null
-                    ? patientsQuery
-                        .Where(p => p.Id == v.Appointment.PatientId)
-                        .Select(p => p.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? patientsQuery.Where(p => p.Id == v.Appointment.PatientId).Select(p => p.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 DoctorName = v.Appointment != null
-                    ? doctorsQuery
-                        .Where(d => d.Id == v.Appointment.DoctorId)
-                        .Select(d => d.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? doctorsQuery.Where(d => d.Id == v.Appointment.DoctorId).Select(d => d.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 Symptoms = v.Symptoms,
                 Diagnosis = v.Diagnosis,
@@ -87,28 +109,33 @@ public class VisitService : IVisitService
 
     public async Task<VisitDto?> GetByIdAsync(int id)
     {
+        var query = _context.Visits
+            .AsNoTracking()
+            .Where(v => v.Id == id);
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue)
+                return null;
+
+            query = query.Where(v => v.Appointment != null && v.Appointment.DoctorId == currentDoctorId.Value);
+        }
+
         var doctorsQuery = _context.Doctors.IgnoreQueryFilters();
         var patientsQuery = _context.Patients.IgnoreQueryFilters();
 
-        return await _context.Visits
-            .AsNoTracking()
-            .Where(v => v.Id == id)
+        return await query
             .Select(v => new VisitDto
             {
                 Id = v.Id,
                 AppointmentId = v.AppointmentId,
                 AppointmentDate = v.Appointment != null ? v.Appointment.AppointmentDate : DateTime.MinValue,
                 PatientName = v.Appointment != null
-                    ? patientsQuery
-                        .Where(p => p.Id == v.Appointment.PatientId)
-                        .Select(p => p.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? patientsQuery.Where(p => p.Id == v.Appointment.PatientId).Select(p => p.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 DoctorName = v.Appointment != null
-                    ? doctorsQuery
-                        .Where(d => d.Id == v.Appointment.DoctorId)
-                        .Select(d => d.FullName)
-                        .FirstOrDefault() ?? string.Empty
+                    ? doctorsQuery.Where(d => d.Id == v.Appointment.DoctorId).Select(d => d.FullName).FirstOrDefault() ?? string.Empty
                     : string.Empty,
                 Symptoms = v.Symptoms,
                 Diagnosis = v.Diagnosis,
@@ -126,29 +153,42 @@ public class VisitService : IVisitService
             return (false, "Diagnosis is required.", null);
 
         var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == dto.AppointmentId);
-        if (appointment is null) return (false, "Invalid appointment id.", null);
-        if (appointment.Status == AppointmentStatus.Cancelled) return (false, "Cannot create visit for a cancelled appointment.", null);
-        if (appointment.Status == AppointmentStatus.Pending) return (false, "Appointment should be confirmed before creating a visit.", null);
+        if (appointment is null)
+            return (false, "Invalid appointment id.", null);
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue || appointment.DoctorId != currentDoctorId.Value)
+                return (false, "You are not allowed to create a visit for this appointment.", null);
+        }
+
+        if (appointment.Status == AppointmentStatus.Cancelled)
+            return (false, "Cannot create visit for a cancelled appointment.", null);
+
+        if (appointment.Status == AppointmentStatus.Pending)
+            return (false, "Appointment should be confirmed before creating a visit.", null);
 
         var visitExists = await _context.Visits.AnyAsync(v => v.AppointmentId == dto.AppointmentId);
-        if (visitExists) return (false, "This appointment already has a visit.", null);
+        if (visitExists)
+            return (false, "This appointment already has a visit.", null);
 
         var visit = new Visit
         {
             AppointmentId = dto.AppointmentId,
-            Symptoms = dto.Symptoms,
-            Diagnosis = dto.Diagnosis,
-            Notes = dto.Notes
+            Symptoms = dto.Symptoms.Trim(),
+            Diagnosis = dto.Diagnosis.Trim(),
+            Notes = dto.Notes?.Trim() ?? string.Empty
         };
 
         _context.Visits.Add(visit);
-        await _context.SaveChangesAsync();
 
         if (appointment.Status != AppointmentStatus.Completed)
         {
             appointment.Status = AppointmentStatus.Completed;
-            await _context.SaveChangesAsync();
         }
+
+        await _context.SaveChangesAsync();
 
         var created = await GetByIdAsync(visit.Id);
         return (true, "Visit created successfully.", created);
@@ -156,8 +196,19 @@ public class VisitService : IVisitService
 
     public async Task<(bool Success, string Message, VisitDto? Visit)> UpdateAsync(int id, UpdateVisitDto dto)
     {
-        var visit = await _context.Visits.FindAsync(id);
-        if (visit is null) return (false, "Visit not found.", null);
+        var visit = await _context.Visits
+            .Include(v => v.Appointment)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (visit is null)
+            return (false, "Visit not found.", null);
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue || visit.Appointment?.DoctorId != currentDoctorId.Value)
+                return (false, "You are not allowed to update this visit.", null);
+        }
 
         if (string.IsNullOrWhiteSpace(dto.Symptoms))
             return (false, "Symptoms are required.", null);
@@ -165,9 +216,9 @@ public class VisitService : IVisitService
         if (string.IsNullOrWhiteSpace(dto.Diagnosis))
             return (false, "Diagnosis is required.", null);
 
-        visit.Symptoms = dto.Symptoms;
-        visit.Diagnosis = dto.Diagnosis;
-        visit.Notes = dto.Notes;
+        visit.Symptoms = dto.Symptoms.Trim();
+        visit.Diagnosis = dto.Diagnosis.Trim();
+        visit.Notes = dto.Notes?.Trim() ?? string.Empty;
 
         await _context.SaveChangesAsync();
 
@@ -177,8 +228,19 @@ public class VisitService : IVisitService
 
     public async Task<(bool Success, string Message)> DeleteAsync(int id)
     {
-        var visit = await _context.Visits.FindAsync(id);
-        if (visit is null) return (false, "Visit not found.");
+        var visit = await _context.Visits
+            .Include(v => v.Appointment)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (visit is null)
+            return (false, "Visit not found.");
+
+        if (IsDoctor())
+        {
+            var currentDoctorId = await GetCurrentDoctorIdAsync();
+            if (!currentDoctorId.HasValue || visit.Appointment?.DoctorId != currentDoctorId.Value)
+                return (false, "You are not allowed to delete this visit.");
+        }
 
         var hasPrescriptions = await _context.Prescriptions.AnyAsync(p => p.VisitId == id);
         if (hasPrescriptions)
@@ -186,6 +248,25 @@ public class VisitService : IVisitService
 
         _context.Visits.Remove(visit);
         await _context.SaveChangesAsync();
+
         return (true, "Visit deleted successfully.");
+    }
+
+    private bool IsDoctor()
+    {
+        return _httpContextAccessor.HttpContext?.User?.IsInRole(AppRoles.Doctor) == true;
+    }
+
+    private async Task<int?> GetCurrentDoctorIdAsync()
+    {
+        var userId = _currentUserService.UserId;
+        if (string.IsNullOrWhiteSpace(userId))
+            return null;
+
+        return await _context.Doctors
+            .AsNoTracking()
+            .Where(d => d.ApplicationUserId == userId)
+            .Select(d => (int?)d.Id)
+            .FirstOrDefaultAsync();
     }
 }
