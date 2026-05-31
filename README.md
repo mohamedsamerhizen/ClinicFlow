@@ -4,22 +4,18 @@ ClinicFlow is a portfolio-grade Smart Clinic Management System API built with .N
 
 The project models realistic clinic workflows: doctors, patients, schedules, appointments, visits, prescriptions, dashboard reporting, audit fields, soft delete, role-based authorization, validation, and automated tests.
 
-## Highlights
+## Portfolio Highlights
 
-- Clean Controller-Service-DbContext architecture
-- ASP.NET Core Identity with JWT bearer authentication
-- Refresh token rotation with hashed token storage
-- Role-based access control: Admin, Doctor, Receptionist
-- Strong appointment business rules and database conflict protection
-- Soft delete with audit fields and query filters
-- Unified API response shape
-- Global exception middleware
-- Health checks, rate limiting, response caching, Swagger, Serilog
-- Unit and integration tests with xUnit and WebApplicationFactory
-- Docker Compose support with SQL Server
-- GitHub Actions CI workflow
-- Postman collection included
-- Backward-compatible API routes under `/api/...` and `/api/v1/...`
+- JWT Authentication with ASP.NET Core Identity
+- Refresh Tokens with hashed storage and rotation
+- Role-based Authorization for Admin, Doctor, and Receptionist workflows
+- EF Core migrations with SQL Server constraints and indexes
+- SQL Server persistence for local and Docker environments
+- Docker Compose setup for API and database services
+- SQLite integration tests with xUnit and WebApplicationFactory
+- GitHub Actions CI for restore, build, test, and format checks
+- Health Checks, Rate Limiting, and response caching
+- Serilog logging for structured diagnostics
 
 ## Tech Stack
 
@@ -209,6 +205,53 @@ Email: admin@clinicflow.local
 Password: Admin@12345
 ```
 
+## Screenshots & Demo Flow
+
+Add screenshots after running the project locally.
+
+Expected screenshot files:
+
+| Screenshot | Path | What to Capture |
+|---|---|---|
+| Swagger UI | `docs/screenshots/swagger.png` | API documentation with grouped endpoints |
+| Health Check | `docs/screenshots/health.png` | `/health` returning a healthy response |
+| Docker Run | `docs/screenshots/docker.png` | Docker Compose services running locally |
+| Postman Login | `docs/screenshots/postman-login.png` | Successful demo user login response |
+| Postman Refresh | `docs/screenshots/postman-refresh.png` | Refresh token rotation response |
+| Appointments | `docs/screenshots/appointments.png` | Appointment workflow request or Swagger endpoint |
+
+Local URLs:
+
+```text
+API:     http://localhost:8080
+Swagger: http://localhost:8080/swagger
+Health:  http://localhost:8080/health
+```
+
+Useful demo commands:
+
+```powershell
+docker compose up --build -d
+docker compose down
+dotnet build
+dotnet test
+```
+
+Suggested demo flow:
+
+1. Start Docker with `docker compose up --build -d`.
+2. Open Swagger at `http://localhost:8080/swagger`.
+3. Check `/health` at `http://localhost:8080/health`.
+4. Login as the demo user.
+5. Refresh the token.
+6. Create a patient.
+7. Create a doctor schedule.
+8. Create an appointment.
+9. Confirm the appointment.
+10. Create a visit.
+11. Add a prescription.
+12. View the dashboard.
+
 ## Testing
 
 Run all tests:
@@ -284,7 +327,8 @@ dotnet build "progect 2.sln" --no-restore
 dotnet test "progect 2.sln" --no-build --no-restore
 dotnet format "progect 2.sln" --verify-no-changes --no-restore
 dotnet ef database update --project "ClinicFlow/ClinicFlow.csproj"
-docker compose up --build
+docker compose up --build -d
+docker compose down
 ```
 
 ## API Examples
