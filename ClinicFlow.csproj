@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ClinicFlow.Tests\**" />
+    <Content Remove="ClinicFlow.Tests\**" />
+    <EmbeddedResource Remove="ClinicFlow.Tests\**" />
+    <None Remove="ClinicFlow.Tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Common\" />
     <Folder Include="Constants\" />
     <Folder Include="Controllers\" />

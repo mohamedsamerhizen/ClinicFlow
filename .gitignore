@@ -30,3 +30,6 @@ coverage/
 # Local dumps / generated snapshots
 clinicflow-full-code.txt
 clinicflow-full-dump.txt
+
+# Local archives
+*.zip

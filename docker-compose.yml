@@ -1,0 +1,45 @@
+services:
+  clinicflow-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clinicflow-api
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=ClinicFlowDb;User Id=sa;Password=${SA_PASSWORD:-ClinicFlow_SqlServer_2026!};TrustServerCertificate=True;MultipleActiveResultSets=true"
+      Jwt__Key: "${JWT_KEY:-ClinicFlow_Development_Jwt_Key_Change_Me_1234567890}"
+      Jwt__Issuer: ClinicFlow
+      Jwt__Audience: ClinicFlowUsers
+      Jwt__DurationInMinutes: "${JWT_DURATION_IN_MINUTES:-60}"
+      Jwt__RefreshTokenDurationInDays: "${JWT_REFRESH_TOKEN_DURATION_IN_DAYS:-7}"
+      AdminSeed__Enabled: "${ADMIN_SEED_ENABLED:-true}"
+      AdminSeed__FullName: "${ADMIN_FULL_NAME:-ClinicFlow Admin}"
+      AdminSeed__Email: "${ADMIN_EMAIL:-admin@clinicflow.local}"
+      AdminSeed__Password: "${ADMIN_PASSWORD:-Admin@12345}"
+      DemoSeed__Enabled: "${DEMO_SEED_ENABLED:-true}"
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: clinicflow-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD:-ClinicFlow_SqlServer_2026!}"
+    ports:
+      - "14333:1433"
+    volumes:
+      - clinicflow-sql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "(/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\") || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  clinicflow-sql-data:

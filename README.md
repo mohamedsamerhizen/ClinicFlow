@@ -103,7 +103,7 @@ Clinical workflow:
 ## Project Structure
 
 ```text
-ClinicFlow/
+Repository root
   Common/
   Constants/
   Controllers/
@@ -117,6 +117,8 @@ ClinicFlow/
   Middlewares/
   Migrations/
   Services/
+  ClinicFlow.csproj
+  ClinicFlow.slnx
   Program.cs
   appsettings.json
 
@@ -147,14 +149,13 @@ postman/ClinicFlow.postman_collection.json
 From the repository root:
 
 ```powershell
-dotnet restore "progect 2.sln"
-dotnet build "progect 2.sln"
+dotnet restore ClinicFlow.slnx
+dotnet build ClinicFlow.slnx
 ```
 
 Configure development secrets:
 
 ```powershell
-cd ClinicFlow
 dotnet user-secrets set "Jwt:Key" "ClinicFlow_Development_Jwt_Key_Change_Me_1234567890"
 dotnet user-secrets set "AdminSeed:Enabled" "true"
 dotnet user-secrets set "AdminSeed:FullName" "ClinicFlow Admin"
@@ -256,8 +257,8 @@ Useful demo commands:
 ```powershell
 docker compose up --build -d
 docker compose down
-dotnet build
-dotnet test
+dotnet build ClinicFlow.slnx
+dotnet test ClinicFlow.slnx
 ```
 
 Suggested demo flow:
@@ -280,7 +281,7 @@ Suggested demo flow:
 Run all tests:
 
 ```powershell
-dotnet test "progect 2.sln"
+dotnet test ClinicFlow.slnx
 ```
 
 Current coverage includes:
@@ -345,11 +346,11 @@ Security notes:
 ## Useful Commands
 
 ```powershell
-dotnet restore "progect 2.sln"
-dotnet build "progect 2.sln" --no-restore
-dotnet test "progect 2.sln" --no-build --no-restore
-dotnet format "progect 2.sln" --verify-no-changes --no-restore
-dotnet ef database update --project "ClinicFlow/ClinicFlow.csproj"
+dotnet restore ClinicFlow.slnx
+dotnet build ClinicFlow.slnx --no-restore
+dotnet test ClinicFlow.slnx --no-build --no-restore
+dotnet format ClinicFlow.slnx --verify-no-changes --no-restore
+dotnet ef database update --project ClinicFlow.csproj
 docker compose up --build -d
 docker compose down
 ```

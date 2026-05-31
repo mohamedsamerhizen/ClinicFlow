@@ -1,0 +1,273 @@
+{
+  "info": {
+    "name": "ClinicFlow API",
+    "description": "Portfolio-ready request collection for ClinicFlow. Set baseUrl and run Login first to populate token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5173"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "noauth"
+        },
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Auth - Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.token) {",
+              "  pm.collectionVariables.set('token', json.data.token);",
+              "  pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+              "  pm.collectionVariables.set('userId', json.data.userId);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@clinicflow.local\",\n  \"password\": \"Admin@12345\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Auth - Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json && json.data && json.data.token) {",
+              "  pm.collectionVariables.set('token', json.data.token);",
+              "  pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+              "  pm.collectionVariables.set('userId', json.data.userId);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/refresh"
+      }
+    },
+    {
+      "name": "Auth - Revoke Refresh Token",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/auth/revoke"
+      }
+    },
+    {
+      "name": "Specializations - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Neurology\"\n}"
+        },
+        "url": "{{baseUrl}}/api/specializations"
+      }
+    },
+    {
+      "name": "Specializations - Get All",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/specializations"
+      }
+    },
+    {
+      "name": "Doctors - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Dr. Lina Sami\",\n  \"phoneNumber\": \"07755550123\",\n  \"specializationId\": 1\n}"
+        },
+        "url": "{{baseUrl}}/api/doctors"
+      }
+    },
+    {
+      "name": "Patients - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"fullName\": \"Ali Hassan\",\n  \"phoneNumber\": \"07590000001\",\n  \"dateOfBirth\": \"1995-04-12\",\n  \"gender\": \"Male\"\n}"
+        },
+        "url": "{{baseUrl}}/api/patients"
+      }
+    },
+    {
+      "name": "Doctor Schedules - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"doctorId\": 1,\n  \"dayOfWeek\": 1,\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"17:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/doctorschedules"
+      }
+    },
+    {
+      "name": "Appointments - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"doctorId\": 1,\n  \"patientId\": 1,\n  \"appointmentDate\": \"2026-06-01T09:00:00\"\n}"
+        },
+        "url": "{{baseUrl}}/api/appointments"
+      }
+    },
+    {
+      "name": "Appointments - Confirm",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/api/appointments/1/confirm"
+      }
+    },
+    {
+      "name": "Appointments - Complete",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/api/appointments/1/complete"
+      }
+    },
+    {
+      "name": "Visits - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"appointmentId\": 1,\n  \"symptoms\": \"Headache and fatigue\",\n  \"diagnosis\": \"Migraine\",\n  \"notes\": \"Patient advised to rest and hydrate.\"\n}"
+        },
+        "url": "{{baseUrl}}/api/visits"
+      }
+    },
+    {
+      "name": "Prescriptions - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"visitId\": 1,\n  \"medicationName\": \"Paracetamol\",\n  \"dosage\": \"500 mg\",\n  \"instructions\": \"Take after food when needed.\",\n  \"durationInDays\": 5\n}"
+        },
+        "url": "{{baseUrl}}/api/prescriptions"
+      }
+    },
+    {
+      "name": "Dashboard - Overview",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/dashboard/overview"
+      }
+    }
+  ]
+}
