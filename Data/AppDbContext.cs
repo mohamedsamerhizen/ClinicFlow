@@ -96,9 +96,20 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Appointment>()
             .HasIndex(a => new { a.PatientId, a.AppointmentDate, a.Status });
 
+        builder.Entity<Appointment>()
+            .HasIndex(a => new { a.DoctorId, a.AppointmentDate })
+            .IsUnique()
+            .HasFilter("[Status] <> 2");
+
+        builder.Entity<Appointment>()
+            .HasIndex(a => new { a.PatientId, a.AppointmentDate })
+            .IsUnique()
+            .HasFilter("[Status] <> 2");
+
         builder.Entity<Visit>()
             .HasIndex(v => v.AppointmentId)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
 
         builder.Entity<Prescription>()
             .HasIndex(p => p.VisitId);
@@ -164,16 +175,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasQueryFilter(p => !p.IsDeleted);
 
         builder.Entity<Appointment>()
-            .HasQueryFilter(a => !a.Doctor!.IsDeleted && !a.Patient!.IsDeleted);
+            .HasQueryFilter(a => !a.IsDeleted && !a.Doctor!.IsDeleted && !a.Patient!.IsDeleted);
 
         builder.Entity<DoctorSchedule>()
-            .HasQueryFilter(s => !s.Doctor!.IsDeleted);
+            .HasQueryFilter(s => !s.IsDeleted && !s.Doctor!.IsDeleted);
 
         builder.Entity<Visit>()
-            .HasQueryFilter(v => !v.Appointment!.Doctor!.IsDeleted && !v.Appointment.Patient!.IsDeleted);
+            .HasQueryFilter(v => !v.IsDeleted && !v.Appointment!.IsDeleted && !v.Appointment.Doctor!.IsDeleted && !v.Appointment.Patient!.IsDeleted);
 
         builder.Entity<Prescription>()
-            .HasQueryFilter(p => !p.Visit!.Appointment!.Doctor!.IsDeleted && !p.Visit.Appointment.Patient!.IsDeleted);
+            .HasQueryFilter(p => !p.IsDeleted && !p.Visit!.IsDeleted && !p.Visit.Appointment!.IsDeleted && !p.Visit.Appointment.Doctor!.IsDeleted && !p.Visit.Appointment.Patient!.IsDeleted);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

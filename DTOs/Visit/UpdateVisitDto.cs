@@ -13,5 +13,5 @@ public class UpdateVisitDto
     public string Diagnosis { get; set; } = string.Empty;
 
     [StringLength(2000)]
-    public string Notes { get; set; } = string.Empty;
+    public string? Notes { get; set; }
 }

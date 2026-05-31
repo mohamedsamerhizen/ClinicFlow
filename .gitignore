@@ -1,0 +1,32 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+publish/
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# IDE and user-specific files
+.vs/
+.vscode/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+*.cache
+
+# Logs and diagnostics
+[Ll]ogs/
+*.log
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Local dumps / generated snapshots
+clinicflow-full-code.txt
+clinicflow-full-dump.txt

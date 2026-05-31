@@ -5,9 +5,9 @@ namespace ClinicFlow.Interfaces;
 
 public interface IVisitService
 {
-    Task<PagedResponse<VisitDto>> GetAllAsync(VisitQueryParams queryParams);
-    Task<VisitDto?> GetByIdAsync(int id);
-    Task<(bool Success, string Message, VisitDto? Visit)> CreateAsync(CreateVisitDto dto);
-    Task<(bool Success, string Message, VisitDto? Visit)> UpdateAsync(int id, UpdateVisitDto dto);
-    Task<(bool Success, string Message)> DeleteAsync(int id);
+    Task<PagedResponse<VisitDto>> GetAllAsync(VisitQueryParams queryParams, CancellationToken cancellationToken = default);
+    Task<VisitDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<(bool Success, string Message, VisitDto? Visit)> CreateAsync(CreateVisitDto dto, CancellationToken cancellationToken = default);
+    Task<(bool Success, string Message, VisitDto? Visit)> UpdateAsync(int id, UpdateVisitDto dto, CancellationToken cancellationToken = default);
+    Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default);
 }

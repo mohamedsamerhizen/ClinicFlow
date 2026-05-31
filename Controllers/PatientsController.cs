@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ClinicFlow.Controllers;
 
 [Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 [ApiController]
 [Authorize(Policy = AppPolicies.ClinicStaff)]
 public class PatientsController : ControllerBase
@@ -68,9 +69,8 @@ public class PatientsController : ControllerBase
         if (!result.Success)
             return BadRequest(ApiResponse<string>.FailResponse(result.Message));
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = result.Patient!.Id },
+        return Created(
+            $"/api/patients/{result.Patient!.Id}",
             ApiResponse<object>.SuccessResponse(result.Patient, result.Message));
     }
 

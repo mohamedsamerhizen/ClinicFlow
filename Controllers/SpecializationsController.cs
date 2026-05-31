@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ClinicFlow.Controllers;
 
 [Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 [ApiController]
 [Authorize(Policy = AppPolicies.ClinicStaff)]
 public class SpecializationsController : ControllerBase
@@ -42,9 +43,8 @@ public class SpecializationsController : ControllerBase
         var result = await _specializationService.CreateAsync(dto);
         if (!result.Success) return BadRequest(ApiResponse<string>.FailResponse(result.Message));
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = result.Specialization!.Id },
+        return Created(
+            $"/api/specializations/{result.Specialization!.Id}",
             ApiResponse<object>.SuccessResponse(result.Specialization, result.Message));
     }
 

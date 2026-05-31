@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ClinicFlow.Controllers;
 
 [Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 [ApiController]
 [Authorize(Policy = AppPolicies.ClinicStaff)]
 public class DoctorSchedulesController : ControllerBase
@@ -51,9 +52,8 @@ public class DoctorSchedulesController : ControllerBase
         if (!result.Success)
             return BadRequest(ApiResponse<string>.FailResponse(result.Message));
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = result.Schedule!.Id },
+        return Created(
+            $"/api/doctorschedules/{result.Schedule!.Id}",
             ApiResponse<object>.SuccessResponse(result.Schedule, "Schedule created successfully."));
     }
 

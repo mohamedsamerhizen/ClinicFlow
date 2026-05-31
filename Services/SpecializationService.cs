@@ -15,7 +15,7 @@ public class SpecializationService : ISpecializationService
         _context = context;
     }
 
-    public async Task<List<SpecializationDto>> GetAllAsync()
+    public async Task<List<SpecializationDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Specializations
             .OrderBy(s => s.Name)
@@ -27,7 +27,7 @@ public class SpecializationService : ISpecializationService
             .ToListAsync();
     }
 
-    public async Task<SpecializationDto?> GetByIdAsync(int id)
+    public async Task<SpecializationDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Specializations
             .Where(s => s.Id == id)
@@ -39,7 +39,7 @@ public class SpecializationService : ISpecializationService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(bool Success, string Message, SpecializationDto? Specialization)> CreateAsync(CreateSpecializationDto dto)
+    public async Task<(bool Success, string Message, SpecializationDto? Specialization)> CreateAsync(CreateSpecializationDto dto, CancellationToken cancellationToken = default)
     {
         var name = dto.Name.Trim();
 
@@ -64,7 +64,7 @@ public class SpecializationService : ISpecializationService
         });
     }
 
-    public async Task<(bool Success, string Message, SpecializationDto? Specialization)> UpdateAsync(int id, CreateSpecializationDto dto)
+    public async Task<(bool Success, string Message, SpecializationDto? Specialization)> UpdateAsync(int id, CreateSpecializationDto dto, CancellationToken cancellationToken = default)
     {
         var specialization = await _context.Specializations.FindAsync(id);
         if (specialization is null)
@@ -88,7 +88,7 @@ public class SpecializationService : ISpecializationService
         });
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(int id)
+    public async Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var specialization = await _context.Specializations.FindAsync(id);
         if (specialization is null)

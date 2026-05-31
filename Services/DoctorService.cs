@@ -16,7 +16,7 @@ public class DoctorService : IDoctorService
         _context = context;
     }
 
-    public async Task<PagedResponse<DoctorDto>> GetAllAsync(DoctorQueryParams queryParams)
+    public async Task<PagedResponse<DoctorDto>> GetAllAsync(DoctorQueryParams queryParams, CancellationToken cancellationToken = default)
     {
         var query = _context.Doctors
             .Include(d => d.Specialization)
@@ -62,7 +62,7 @@ public class DoctorService : IDoctorService
         };
     }
 
-    public async Task<DoctorDto?> GetByIdAsync(int id)
+    public async Task<DoctorDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Doctors
             .Include(d => d.Specialization)
@@ -78,7 +78,7 @@ public class DoctorService : IDoctorService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(bool Success, string Message, DoctorDto? Doctor)> CreateAsync(CreateDoctorDto dto)
+    public async Task<(bool Success, string Message, DoctorDto? Doctor)> CreateAsync(CreateDoctorDto dto, CancellationToken cancellationToken = default)
     {
         var fullName = dto.FullName.Trim();
         var phoneNumber = dto.PhoneNumber.Trim();
@@ -122,7 +122,7 @@ public class DoctorService : IDoctorService
         return (true, "Doctor created successfully.", createdDoctor);
     }
 
-    public async Task<(bool Success, string Message, DoctorDto? Doctor)> UpdateAsync(int id, CreateDoctorDto dto)
+    public async Task<(bool Success, string Message, DoctorDto? Doctor)> UpdateAsync(int id, CreateDoctorDto dto, CancellationToken cancellationToken = default)
     {
         var doctor = await _context.Doctors.FindAsync(id);
         if (doctor is null)
@@ -166,7 +166,7 @@ public class DoctorService : IDoctorService
         return (true, "Doctor updated successfully.", updatedDoctor);
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(int id)
+    public async Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var doctor = await _context.Doctors.FindAsync(id);
         if (doctor is null)

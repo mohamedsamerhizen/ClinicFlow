@@ -8,13 +8,16 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    private readonly IWebHostEnvironment _environment;
 
     public GlobalExceptionMiddleware(
         RequestDelegate next,
-        ILogger<GlobalExceptionMiddleware> logger)
+        ILogger<GlobalExceptionMiddleware> logger,
+        IWebHostEnvironment environment)
     {
         _next = next;
         _logger = logger;
+        _environment = environment;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -38,11 +41,17 @@ public class GlobalExceptionMiddleware
             var response = ApiResponse<object>.FailResponse("An unexpected error occurred.");
             response.Data = new
             {
-                traceId
+                traceId,
+                detail = ShouldIncludeExceptionDetails() ? exception.ToString() : null
             };
 
             var json = JsonSerializer.Serialize(response);
             await context.Response.WriteAsync(json);
         }
+    }
+
+    private bool ShouldIncludeExceptionDetails()
+    {
+        return _environment.IsDevelopment() || _environment.IsEnvironment("Testing");
     }
 }

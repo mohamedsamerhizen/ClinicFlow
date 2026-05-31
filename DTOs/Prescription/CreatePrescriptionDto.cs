@@ -15,7 +15,8 @@ public class CreatePrescriptionDto
     [StringLength(200, MinimumLength = 2)]
     public string Dosage { get; set; } = string.Empty;
 
-    [StringLength(1000)]
+    [Required]
+    [StringLength(1000, MinimumLength = 2)]
     public string Instructions { get; set; } = string.Empty;
 
     [Range(1, 365)]

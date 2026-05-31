@@ -16,7 +16,7 @@ public class DoctorScheduleService : IDoctorScheduleService
         _context = context;
     }
 
-    public async Task<List<DoctorScheduleDto>> GetAllAsync()
+    public async Task<List<DoctorScheduleDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.DoctorSchedules
             .AsNoTracking()
@@ -33,7 +33,7 @@ public class DoctorScheduleService : IDoctorScheduleService
             .ToListAsync();
     }
 
-    public async Task<DoctorScheduleDto?> GetByIdAsync(int id)
+    public async Task<DoctorScheduleDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.DoctorSchedules
             .AsNoTracking()
@@ -51,17 +51,20 @@ public class DoctorScheduleService : IDoctorScheduleService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(bool Success, string Message, DoctorScheduleDto? Schedule)> CreateAsync(CreateDoctorScheduleDto dto)
+    public async Task<(bool Success, string Message, DoctorScheduleDto? Schedule)> CreateAsync(CreateDoctorScheduleDto dto, CancellationToken cancellationToken = default)
     {
         var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == dto.DoctorId);
         if (!doctorExists) return (false, "Invalid doctor id.", null);
         if (dto.StartTime >= dto.EndTime) return (false, "Start time must be earlier than end time.", null);
 
-        var hasOverlap = await _context.DoctorSchedules.AnyAsync(s =>
-            s.DoctorId == dto.DoctorId &&
-            s.DayOfWeek == dto.DayOfWeek &&
-            dto.StartTime < s.EndTime &&
-            dto.EndTime > s.StartTime);
+        var schedulesForDay = await _context.DoctorSchedules
+            .AsNoTracking()
+            .Where(s => s.DoctorId == dto.DoctorId && s.DayOfWeek == dto.DayOfWeek)
+            .Select(s => new { s.StartTime, s.EndTime })
+            .ToListAsync();
+
+        var hasOverlap = schedulesForDay.Any(s =>
+            dto.StartTime < s.EndTime && dto.EndTime > s.StartTime);
 
         if (hasOverlap) return (false, "This doctor already has an overlapping schedule on this day.", null);
 
@@ -80,7 +83,7 @@ public class DoctorScheduleService : IDoctorScheduleService
         return (true, "Schedule created successfully.", created);
     }
 
-    public async Task<(bool Success, string Message, DoctorScheduleDto? Schedule)> UpdateAsync(int id, CreateDoctorScheduleDto dto)
+    public async Task<(bool Success, string Message, DoctorScheduleDto? Schedule)> UpdateAsync(int id, CreateDoctorScheduleDto dto, CancellationToken cancellationToken = default)
     {
         var schedule = await _context.DoctorSchedules.FindAsync(id);
         if (schedule is null) return (false, "Schedule not found.", null);
@@ -89,29 +92,37 @@ public class DoctorScheduleService : IDoctorScheduleService
         if (!doctorExists) return (false, "Invalid doctor id.", null);
         if (dto.StartTime >= dto.EndTime) return (false, "Start time must be earlier than end time.", null);
 
-        var hasOverlap = await _context.DoctorSchedules.AnyAsync(s =>
-            s.Id != id &&
-            s.DoctorId == dto.DoctorId &&
-            s.DayOfWeek == dto.DayOfWeek &&
-            dto.StartTime < s.EndTime &&
-            dto.EndTime > s.StartTime);
+        var schedulesForDay = await _context.DoctorSchedules
+            .AsNoTracking()
+            .Where(s => s.Id != id && s.DoctorId == dto.DoctorId && s.DayOfWeek == dto.DayOfWeek)
+            .Select(s => new { s.StartTime, s.EndTime })
+            .ToListAsync();
+
+        var hasOverlap = schedulesForDay.Any(s =>
+            dto.StartTime < s.EndTime && dto.EndTime > s.StartTime);
 
         if (hasOverlap) return (false, "This doctor already has an overlapping schedule on this day.", null);
 
         var now = DateTime.Now;
 
-        var hasAffectedFutureAppointments = await _context.Appointments.AnyAsync(a =>
-            a.DoctorId == schedule.DoctorId &&
-            a.AppointmentDate > now &&
-            a.Status != AppointmentStatus.Cancelled &&
-            a.AppointmentDate.DayOfWeek == schedule.DayOfWeek &&
-            a.AppointmentDate.TimeOfDay >= schedule.StartTime &&
-            a.AppointmentDate.TimeOfDay < schedule.EndTime &&
+        var futureAppointmentDates = await _context.Appointments
+            .AsNoTracking()
+            .Where(a =>
+                a.DoctorId == schedule.DoctorId &&
+                a.AppointmentDate > now &&
+                a.Status != AppointmentStatus.Cancelled)
+            .Select(a => a.AppointmentDate)
+            .ToListAsync();
+
+        var hasAffectedFutureAppointments = futureAppointmentDates.Any(appointmentDate =>
+            appointmentDate.DayOfWeek == schedule.DayOfWeek &&
+            appointmentDate.TimeOfDay >= schedule.StartTime &&
+            appointmentDate.TimeOfDay < schedule.EndTime &&
             (
                 dto.DoctorId != schedule.DoctorId ||
                 dto.DayOfWeek != schedule.DayOfWeek ||
-                a.AppointmentDate.TimeOfDay < dto.StartTime ||
-                a.AppointmentDate.TimeOfDay >= dto.EndTime
+                appointmentDate.TimeOfDay < dto.StartTime ||
+                appointmentDate.TimeOfDay >= dto.EndTime
             ));
 
         if (hasAffectedFutureAppointments)
@@ -128,19 +139,25 @@ public class DoctorScheduleService : IDoctorScheduleService
         return (true, "Schedule updated successfully.", updated);
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(int id)
+    public async Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var schedule = await _context.DoctorSchedules.FindAsync(id);
         if (schedule is null) return (false, "Schedule not found.");
 
         var now = DateTime.Now;
-        var hasFutureAppointmentsInThisSchedule = await _context.Appointments.AnyAsync(a =>
-            a.DoctorId == schedule.DoctorId &&
-            a.AppointmentDate > now &&
-            a.Status != AppointmentStatus.Cancelled &&
-            a.AppointmentDate.DayOfWeek == schedule.DayOfWeek &&
-            a.AppointmentDate.TimeOfDay >= schedule.StartTime &&
-            a.AppointmentDate.TimeOfDay < schedule.EndTime);
+        var futureAppointmentDates = await _context.Appointments
+            .AsNoTracking()
+            .Where(a =>
+                a.DoctorId == schedule.DoctorId &&
+                a.AppointmentDate > now &&
+                a.Status != AppointmentStatus.Cancelled)
+            .Select(a => a.AppointmentDate)
+            .ToListAsync();
+
+        var hasFutureAppointmentsInThisSchedule = futureAppointmentDates.Any(appointmentDate =>
+            appointmentDate.DayOfWeek == schedule.DayOfWeek &&
+            appointmentDate.TimeOfDay >= schedule.StartTime &&
+            appointmentDate.TimeOfDay < schedule.EndTime);
 
         if (hasFutureAppointmentsInThisSchedule)
             return (false, "Cannot delete schedule because there are future appointments within this schedule.");
@@ -150,7 +167,7 @@ public class DoctorScheduleService : IDoctorScheduleService
         return (true, "Schedule deleted successfully.");
     }
 
-    public async Task<DoctorDailyScheduleDto?> GetDoctorDailyScheduleAsync(int doctorId, DateTime date)
+    public async Task<DoctorDailyScheduleDto?> GetDoctorDailyScheduleAsync(int doctorId, DateTime date, CancellationToken cancellationToken = default)
     {
         var doctor = await _context.Doctors
             .AsNoTracking()
@@ -181,9 +198,12 @@ public class DoctorScheduleService : IDoctorScheduleService
             })
             .ToListAsync();
 
+        var dateStart = date.Date;
+        var dateEnd = dateStart.AddDays(1);
+
         var appointments = await _context.Appointments
             .AsNoTracking()
-            .Where(a => a.DoctorId == doctorId && a.AppointmentDate.Date == date.Date)
+            .Where(a => a.DoctorId == doctorId && a.AppointmentDate >= dateStart && a.AppointmentDate < dateEnd)
             .OrderBy(a => a.AppointmentDate)
             .Select(a => new DoctorDailyScheduleItemDto
             {

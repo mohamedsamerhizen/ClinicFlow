@@ -18,6 +18,13 @@ public class CreateDoctorScheduleDto : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (!Enum.IsDefined(typeof(DayOfWeek), DayOfWeek))
+        {
+            yield return new ValidationResult(
+                "Day of week must be a valid value.",
+                new[] { nameof(DayOfWeek) });
+        }
+
         if (StartTime >= EndTime)
         {
             yield return new ValidationResult(

@@ -24,7 +24,7 @@ public class PrescriptionService : IPrescriptionService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<PagedResponse<PrescriptionDto>> GetAllAsync(PrescriptionQueryParams queryParams)
+    public async Task<PagedResponse<PrescriptionDto>> GetAllAsync(PrescriptionQueryParams queryParams, CancellationToken cancellationToken = default)
     {
         var query = _context.Prescriptions
             .AsNoTracking()
@@ -116,7 +116,7 @@ public class PrescriptionService : IPrescriptionService
         };
     }
 
-    public async Task<PrescriptionDto?> GetByIdAsync(int id)
+    public async Task<PrescriptionDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var query = _context.Prescriptions
             .AsNoTracking()
@@ -160,7 +160,7 @@ public class PrescriptionService : IPrescriptionService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(bool Success, string Message, PrescriptionDto? Prescription)> CreateAsync(CreatePrescriptionDto dto)
+    public async Task<(bool Success, string Message, PrescriptionDto? Prescription)> CreateAsync(CreatePrescriptionDto dto, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(dto.MedicationName))
             return (false, "Medication name is required.", null);
@@ -201,7 +201,7 @@ public class PrescriptionService : IPrescriptionService
         return (true, "Prescription created successfully.", created);
     }
 
-    public async Task<(bool Success, string Message, PrescriptionDto? Prescription)> UpdateAsync(int id, UpdatePrescriptionDto dto)
+    public async Task<(bool Success, string Message, PrescriptionDto? Prescription)> UpdateAsync(int id, UpdatePrescriptionDto dto, CancellationToken cancellationToken = default)
     {
         var prescription = await _context.Prescriptions
             .Include(p => p.Visit)
@@ -238,7 +238,7 @@ public class PrescriptionService : IPrescriptionService
         return (true, "Prescription updated successfully.", updated);
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(int id)
+    public async Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var prescription = await _context.Prescriptions
             .Include(p => p.Visit)

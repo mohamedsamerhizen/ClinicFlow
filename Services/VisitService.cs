@@ -25,7 +25,7 @@ public class VisitService : IVisitService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<PagedResponse<VisitDto>> GetAllAsync(VisitQueryParams queryParams)
+    public async Task<PagedResponse<VisitDto>> GetAllAsync(VisitQueryParams queryParams, CancellationToken cancellationToken = default)
     {
         var query = _context.Visits
             .AsNoTracking()
@@ -58,7 +58,11 @@ public class VisitService : IVisitService
         if (queryParams.Date.HasValue)
         {
             var date = queryParams.Date.Value.Date;
-            query = query.Where(v => v.Appointment != null && v.Appointment.AppointmentDate.Date == date);
+            var nextDate = date.AddDays(1);
+            query = query.Where(v =>
+                v.Appointment != null &&
+                v.Appointment.AppointmentDate >= date &&
+                v.Appointment.AppointmentDate < nextDate);
         }
 
         if (!string.IsNullOrWhiteSpace(queryParams.Search))
@@ -107,7 +111,7 @@ public class VisitService : IVisitService
         };
     }
 
-    public async Task<VisitDto?> GetByIdAsync(int id)
+    public async Task<VisitDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var query = _context.Visits
             .AsNoTracking()
@@ -144,7 +148,7 @@ public class VisitService : IVisitService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<(bool Success, string Message, VisitDto? Visit)> CreateAsync(CreateVisitDto dto)
+    public async Task<(bool Success, string Message, VisitDto? Visit)> CreateAsync(CreateVisitDto dto, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(dto.Symptoms))
             return (false, "Symptoms are required.", null);
@@ -168,6 +172,9 @@ public class VisitService : IVisitService
 
         if (appointment.Status == AppointmentStatus.Pending)
             return (false, "Appointment should be confirmed before creating a visit.", null);
+
+        if (appointment.AppointmentDate > DateTime.Now)
+            return (false, "Cannot create visit before appointment time.", null);
 
         var visitExists = await _context.Visits.AnyAsync(v => v.AppointmentId == dto.AppointmentId);
         if (visitExists)
@@ -194,7 +201,7 @@ public class VisitService : IVisitService
         return (true, "Visit created successfully.", created);
     }
 
-    public async Task<(bool Success, string Message, VisitDto? Visit)> UpdateAsync(int id, UpdateVisitDto dto)
+    public async Task<(bool Success, string Message, VisitDto? Visit)> UpdateAsync(int id, UpdateVisitDto dto, CancellationToken cancellationToken = default)
     {
         var visit = await _context.Visits
             .Include(v => v.Appointment)
@@ -226,7 +233,7 @@ public class VisitService : IVisitService
         return (true, "Visit updated successfully.", updated);
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(int id)
+    public async Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var visit = await _context.Visits
             .Include(v => v.Appointment)

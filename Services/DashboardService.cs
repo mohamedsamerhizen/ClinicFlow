@@ -15,7 +15,7 @@ public class DashboardService : IDashboardService
         _context = context;
     }
 
-    public async Task<DashboardOverviewDto> GetOverviewAsync()
+    public async Task<DashboardOverviewDto> GetOverviewAsync(CancellationToken cancellationToken = default)
     {
         var today = DateTime.Today;
         var tomorrow = today.AddDays(1);

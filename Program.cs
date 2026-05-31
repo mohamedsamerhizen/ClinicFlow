@@ -55,7 +55,22 @@ builder.Services.Configure<AdminSeedOptions>(
 builder.Services.Configure<DemoSeedOptions>(
     builder.Configuration.GetSection(DemoSeedOptions.SectionName));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+builder.Configuration.ValidateJwtConfiguration(builder.Environment);
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+
+        options.Password.RequiredLength = 6;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
@@ -88,8 +103,9 @@ app.MapGet("/", () => Results.Ok(ApiResponse<string>.SuccessResponse("ClinicFlow
     .AllowAnonymous()
     .WithName("Root");
 
-using (var scope = app.Services.CreateScope())
+if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
 
     var dbContext = services.GetRequiredService<AppDbContext>();
@@ -102,15 +118,17 @@ using (var scope = app.Services.CreateScope())
 
     await IdentitySeeder.SeedRolesAsync(roleManager);
 
-    if (app.Environment.IsDevelopment() && adminSeedOptions.Value.Enabled)
+    if (adminSeedOptions.Value.Enabled)
     {
         await IdentitySeeder.SeedAdminAsync(userManager, roleManager, adminSeedOptions);
     }
 
-    if (app.Environment.IsDevelopment() && demoSeedOptions.Value.Enabled)
+    if (demoSeedOptions.Value.Enabled)
     {
         await DemoDataSeeder.SeedAsync(dbContext, demoSeedOptions);
     }
 }
 
 app.Run();
+
+public partial class Program;

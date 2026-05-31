@@ -17,7 +17,7 @@ public class PatientService : IPatientService
         _context = context;
     }
 
-    public async Task<PagedResponse<PatientDto>> GetAllAsync(PatientQueryParams queryParams)
+    public async Task<PagedResponse<PatientDto>> GetAllAsync(PatientQueryParams queryParams, CancellationToken cancellationToken = default)
     {
         var query = _context.Patients.AsNoTracking().AsQueryable();
 
@@ -60,7 +60,7 @@ public class PatientService : IPatientService
         };
     }
 
-    public async Task<PatientDto?> GetByIdAsync(int id)
+    public async Task<PatientDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.Patients
             .AsNoTracking()
@@ -76,7 +76,7 @@ public class PatientService : IPatientService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<PatientDto>> SearchByNameAsync(string name)
+    public async Task<List<PatientDto>> SearchByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         var search = name.Trim().ToLower();
 
@@ -95,7 +95,7 @@ public class PatientService : IPatientService
             .ToListAsync();
     }
 
-    public async Task<PatientHistoryDto?> GetHistoryAsync(int id)
+    public async Task<PatientHistoryDto?> GetHistoryAsync(int id, CancellationToken cancellationToken = default)
     {
         var patient = await _context.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
         if (patient is null) return null;
@@ -148,7 +148,7 @@ public class PatientService : IPatientService
         };
     }
 
-    public async Task<PatientSummaryDto?> GetSummaryAsync(int id)
+    public async Task<PatientSummaryDto?> GetSummaryAsync(int id, CancellationToken cancellationToken = default)
     {
         var patient = await _context.Patients
             .AsNoTracking()
@@ -188,7 +188,7 @@ public class PatientService : IPatientService
         return patient;
     }
 
-    public async Task<(bool Success, string Message, PatientDto? Patient)> CreateAsync(CreatePatientDto dto)
+    public async Task<(bool Success, string Message, PatientDto? Patient)> CreateAsync(CreatePatientDto dto, CancellationToken cancellationToken = default)
     {
         var fullName = dto.FullName.Trim();
         var phoneNumber = dto.PhoneNumber.Trim();
@@ -221,7 +221,7 @@ public class PatientService : IPatientService
         return (true, "Patient created successfully.", await GetByIdAsync(patient.Id));
     }
 
-    public async Task<(bool Success, string Message, PatientDto? Patient)> UpdateAsync(int id, CreatePatientDto dto)
+    public async Task<(bool Success, string Message, PatientDto? Patient)> UpdateAsync(int id, CreatePatientDto dto, CancellationToken cancellationToken = default)
     {
         var patient = await _context.Patients.FindAsync(id);
         if (patient is null)
@@ -254,7 +254,7 @@ public class PatientService : IPatientService
         return (true, "Patient updated successfully.", await GetByIdAsync(patient.Id));
     }
 
-    public async Task<(bool Success, string Message)> DeleteAsync(int id)
+    public async Task<(bool Success, string Message)> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var patient = await _context.Patients.FindAsync(id);
         if (patient is null) return (false, "Patient not found.");
