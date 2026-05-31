@@ -1,12 +1,13 @@
-# Screenshot Placeholders
+# Screenshot Captures
 
-Add screenshots after running the project locally.
+These screenshots were captured from a local Docker run of ClinicFlow at `http://localhost:8080`.
+Sensitive values such as passwords and token contents are redacted for public documentation.
 
-Expected files:
+Files:
 
-- `swagger.png` - Swagger UI at `http://localhost:8080/swagger`
+- `swagger.png` - OpenAPI endpoint coverage from the running API
 - `health.png` - Health check response at `http://localhost:8080/health`
-- `docker.png` - Docker Compose services running
-- `postman-login.png` - Successful demo user login
-- `postman-refresh.png` - Refresh token rotation
-- `appointments.png` - Appointment workflow request or endpoint
+- `docker.png` - Docker Compose services running locally
+- `postman-login.png` - Successful demo user login response
+- `postman-refresh.png` - Refresh token rotation response
+- `appointments.png` - Authenticated appointments workflow response

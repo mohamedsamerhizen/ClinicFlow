@@ -207,18 +207,41 @@ Password: Admin@12345
 
 ## Screenshots & Demo Flow
 
-Add screenshots after running the project locally.
+The screenshots below were captured from a local Docker run against `http://localhost:8080`.
+Sensitive values such as passwords and token contents are redacted for public documentation.
 
-Expected screenshot files:
-
-| Screenshot | Path | What to Capture |
+| Screenshot | Path | What It Shows |
 |---|---|---|
-| Swagger UI | `docs/screenshots/swagger.png` | API documentation with grouped endpoints |
+| Swagger UI | `docs/screenshots/swagger.png` | OpenAPI endpoint coverage |
 | Health Check | `docs/screenshots/health.png` | `/health` returning a healthy response |
 | Docker Run | `docs/screenshots/docker.png` | Docker Compose services running locally |
-| Postman Login | `docs/screenshots/postman-login.png` | Successful demo user login response |
-| Postman Refresh | `docs/screenshots/postman-refresh.png` | Refresh token rotation response |
-| Appointments | `docs/screenshots/appointments.png` | Appointment workflow request or Swagger endpoint |
+| Login Response | `docs/screenshots/postman-login.png` | Successful demo user login response |
+| Refresh Token Response | `docs/screenshots/postman-refresh.png` | Refresh token rotation response |
+| Appointments Workflow | `docs/screenshots/appointments.png` | Authenticated appointments response |
+
+<p>
+  <img src="docs/screenshots/swagger.png" alt="Swagger UI screenshot" width="720">
+</p>
+
+<p>
+  <img src="docs/screenshots/health.png" alt="Health check screenshot" width="720">
+</p>
+
+<p>
+  <img src="docs/screenshots/docker.png" alt="Docker Compose screenshot" width="720">
+</p>
+
+<p>
+  <img src="docs/screenshots/postman-login.png" alt="Login response screenshot" width="720">
+</p>
+
+<p>
+  <img src="docs/screenshots/postman-refresh.png" alt="Refresh token response screenshot" width="720">
+</p>
+
+<p>
+  <img src="docs/screenshots/appointments.png" alt="Appointments workflow screenshot" width="720">
+</p>
 
 Local URLs:
 
